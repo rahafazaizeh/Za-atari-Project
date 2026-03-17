@@ -350,29 +350,14 @@ export default function App() {
               </CardContent>
             </Card>
 
-            <Card className="bg-zinc-900 text-white border-none">
-              <CardContent className="p-8 flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
-                  <Plus className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Update Production</h3>
-                <p className="text-zinc-400 text-sm mb-6">
-                  Enter today's installation numbers for cabinets and meters.
-                </p>
-                <button 
-                  onClick={() => {
-                    const today = new Date().toISOString().split('T')[0];
-                    const todayData = productionData.find(d => d.date.startsWith(today));
-                    if (todayData) setEditingDay(todayData);
-                  }}
-                  className="w-full py-3 bg-white text-zinc-900 rounded-xl font-bold hover:bg-zinc-100 transition-all"
-                >
-                  Log Production
-                </button>
-              </CardContent>
-            </Card>
           </div>
         </div>
+
+        <footer className="mt-16 pt-8 border-t border-zinc-200 text-center">
+          <p className="text-zinc-400 font-medium text-sm tracking-wide uppercase">
+            Installation and Commissioning Smart Meters For Za'atari Camp
+          </p>
+        </footer>
       </main>
 
       {/* Edit Modal */}
