@@ -12,7 +12,6 @@ import {
   AlertCircle, 
   Calendar,
   Plus,
-  Search,
   Bell,
   TrendingUp,
   Box,
@@ -46,7 +45,7 @@ export default function App() {
   });
 
   const [selectedMonth, setSelectedMonth] = useState(3); // April by default
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const [editingDay, setEditingDay] = useState<DailyProduction | null>(null);
 
   // Save to localStorage whenever data changes
@@ -65,11 +64,14 @@ export default function App() {
     return productionData.filter(day => {
       const date = new Date(day.date);
       const matchesMonth = date.getMonth() === selectedMonth;
-      const dateStr = format(date, 'MMM dd, yyyy').toLowerCase();
-      const matchesSearch = dateStr.includes(searchQuery.toLowerCase());
-      return matchesMonth && matchesSearch;
+      
+      if (selectedDate) {
+        return day.date.startsWith(selectedDate);
+      }
+      
+      return matchesMonth;
     });
-  }, [productionData, selectedMonth, searchQuery]);
+  }, [productionData, selectedMonth, selectedDate]);
 
   const stats = useMemo(() => {
     const totalCabinetsActual = productionData.reduce((acc, day) => acc + day.cabinets.actual, 0);
@@ -167,14 +169,28 @@ export default function App() {
 
           <div className="flex items-center gap-5">
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-brand-500 transition-colors" />
+              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-brand-500 transition-colors pointer-events-none" />
               <input 
-                type="text" 
-                placeholder="Search date..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-6 py-3 bg-white border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all w-full md:w-72 shadow-sm"
+                type="date" 
+                value={selectedDate}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  if (e.target.value) {
+                    const date = new Date(e.target.value);
+                    setSelectedMonth(date.getMonth());
+                  }
+                }}
+                className="pl-12 pr-6 py-3 bg-white border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all w-full md:w-52 shadow-sm"
               />
+              {selectedDate && (
+                <button 
+                  onClick={() => setSelectedDate('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                  title="Clear date filter"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+              )}
             </div>
             <button 
               onClick={() => {
