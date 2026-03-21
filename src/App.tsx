@@ -192,25 +192,10 @@ export default function App() {
                 </button>
               )}
             </div>
-            <button 
-              onClick={() => {
-                if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
-                  localStorage.removeItem(STORAGE_KEY);
-                  window.location.reload();
-                }
-              }}
-              className="p-3 bg-white border border-zinc-200 rounded-2xl hover:bg-rose-50 transition-all relative shadow-sm group"
-              title="Reset Data"
-            >
-              <RotateCcw className="w-5 h-5 text-rose-500 group-hover:rotate-180 transition-all duration-500" />
-            </button>
             <button className="p-3 bg-white border border-zinc-200 rounded-2xl hover:bg-zinc-50 transition-all relative shadow-sm group">
               <Bell className="w-5 h-5 text-zinc-600 group-hover:text-brand-500 transition-colors" />
               <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white"></span>
             </button>
-            <div className="w-11 h-11 bg-white p-1 rounded-2xl border border-zinc-200 shadow-sm">
-              <img src="https://picsum.photos/seed/user/100/100" alt="User" className="w-full h-full rounded-xl object-cover" referrerPolicy="no-referrer" />
-            </div>
           </div>
         </header>
 
