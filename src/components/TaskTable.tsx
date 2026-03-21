@@ -2,14 +2,13 @@ import React from 'react';
 import { DailyProduction } from '../types';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
-import { Circle, Clock, CheckCircle2, Edit3 } from 'lucide-react';
+import { Circle, Clock, CheckCircle2 } from 'lucide-react';
 
 interface TaskTableProps {
   data: DailyProduction[];
-  onEdit: (day: DailyProduction) => void;
 }
 
-export function TaskTable({ data, onEdit }: TaskTableProps) {
+export function TaskTable({ data }: TaskTableProps) {
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full text-left border-collapse">
@@ -20,7 +19,6 @@ export function TaskTable({ data, onEdit }: TaskTableProps) {
             <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Cabinets (Actual/Target)</th>
             <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Meters (Actual/Target)</th>
             <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Action</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-50">
@@ -75,15 +73,6 @@ export function TaskTable({ data, onEdit }: TaskTableProps) {
                   {day.cabinets.status === 'not-started' ? 'Not Started' : 
                    day.cabinets.status}
                 </div>
-              </td>
-              <td className="px-6 py-4">
-                <button 
-                  onClick={() => onEdit(day)}
-                  className="p-2 hover:bg-zinc-200 rounded-lg transition-all text-zinc-400 hover:text-zinc-900"
-                  title="Update Production"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
               </td>
             </tr>
           ))}

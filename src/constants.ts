@@ -6,26 +6,14 @@ export const TOTAL_METERS = 6500;
 
 export const generateMockProduction = (): DailyProduction[] => {
   const production: DailyProduction[] = [];
-  const startDate = new Date(2026, 3, 1); // April 1st
-  const endDate = new Date(2026, 7, 6); // August 6th
+  const startDate = new Date(2026, 3, 20); // April 20th
+  const endDate = new Date(2026, 6, 22); // July 22nd (including buffer week)
 
   const days = eachDayOfInterval({ start: startDate, end: endDate });
 
   days.forEach((day, index) => {
-    const month = day.getMonth();
-    let cabinetTarget = 9;
-    let meterTarget = 54;
-
-    if (month === 3 || month === 4) { // April & May
-      cabinetTarget = 7;
-      meterTarget = 42;
-    } else if (month === 5) { // June
-      cabinetTarget = 8;
-      meterTarget = 48;
-    } else if (month === 6 || month === 7) { // July & August
-      cabinetTarget = 9;
-      meterTarget = 54;
-    }
+    let cabinetTarget = 12;
+    let meterTarget = 72;
 
     production.push({
       id: `day-${index}`,
@@ -51,5 +39,4 @@ export const MONTHS = [
   { name: 'May', index: 4 },
   { name: 'June', index: 5 },
   { name: 'July', index: 6 },
-  { name: 'August', index: 7 },
 ];

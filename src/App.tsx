@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Box,
   Cpu,
-  RotateCcw
+  RotateCcw,
+  RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateMockProduction, MONTHS, TOTAL_CABINETS, TOTAL_METERS } from './constants';
@@ -25,11 +26,11 @@ import { Card, CardHeader, CardContent } from './components/Card';
 import { TaskTable } from './components/TaskTable';
 import { ProgressChart } from './components/ProgressChart';
 import { MonthSelector } from './components/MonthSelector';
+import { Analytics } from './components/Analytics';
 
-import { EditProductionModal } from './components/EditProductionModal';
 import { DailyProduction } from './types';
 
-const STORAGE_KEY = 'pulse_production_data';
+const STORAGE_KEY = 'pulse_production_data_v3';
 
 export default function App() {
   const [productionData, setProductionData] = useState<DailyProduction[]>(() => {
@@ -46,19 +47,11 @@ export default function App() {
 
   const [selectedMonth, setSelectedMonth] = useState(3); // April by default
   const [selectedDate, setSelectedDate] = useState('');
-  const [editingDay, setEditingDay] = useState<DailyProduction | null>(null);
 
   // Save to localStorage whenever data changes
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(productionData));
   }, [productionData]);
-
-  const handleUpdateProduction = (updatedDay: DailyProduction) => {
-    setProductionData(prev => prev.map(day => 
-      day.id === updatedDay.id ? updatedDay : day
-    ));
-    setEditingDay(null);
-  };
 
   const filteredData = useMemo(() => {
     return productionData.filter(day => {
@@ -82,10 +75,14 @@ export default function App() {
     const overallProgress = Math.round(((cabinetProgress + meterProgress) / 2));
 
     // Task (Day) Status Counts
-    const totalTasks = productionData.length;
-    const completedTasks = productionData.filter(d => d.cabinets.status === 'completed').length;
-    const inProgressTasks = productionData.filter(d => d.cabinets.status === 'in-progress').length;
-    const notStartedTasks = productionData.filter(d => d.cabinets.status === 'not-started').length;
+    const tasksUntilJuly15 = productionData.filter(d => {
+      const date = new Date(d.date);
+      return date <= new Date(2026, 6, 15, 23, 59, 59);
+    });
+    const totalTasks = tasksUntilJuly15.length;
+    const completedTasks = tasksUntilJuly15.filter(d => d.cabinets.status === 'completed').length;
+    const inProgressTasks = tasksUntilJuly15.filter(d => d.cabinets.status === 'in-progress').length;
+    const notStartedTasks = tasksUntilJuly15.filter(d => d.cabinets.status === 'not-started').length;
 
     return {
       cabinets: { actual: totalCabinetsActual, total: TOTAL_CABINETS, progress: cabinetProgress },
@@ -95,7 +92,7 @@ export default function App() {
         completed: completedTasks,
         inProgress: inProgressTasks,
         notStarted: notStartedTasks,
-        totalDays: 128
+        totalDays: totalTasks
       },
       overallProgress
     };
@@ -130,16 +127,6 @@ export default function App() {
             <Clock className="w-5 h-5" />
             Timeline
           </a>
-          <button 
-            onClick={() => {
-              localStorage.removeItem(STORAGE_KEY);
-              window.location.reload();
-            }}
-            className="w-full flex items-center gap-3 px-4 py-3.5 text-rose-400 hover:bg-rose-500/10 rounded-2xl font-medium transition-all mt-6"
-          >
-            <RotateCcw className="w-5 h-5" />
-            Reset Data
-          </button>
         </nav>
 
         <div className="mt-auto p-5 bg-white/5 rounded-3xl border border-white/10">
@@ -156,6 +143,14 @@ export default function App() {
             />
           </div>
         </div>
+
+        <div className="mt-6 p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+          <div className="flex items-center gap-2 text-emerald-400">
+            <RefreshCw className="w-4 h-4 animate-spin-slow" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Last Updated</span>
+          </div>
+          <p className="text-white font-bold mt-1 text-sm">Mar 21, 2026 • 09:02 AM</p>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -164,7 +159,13 @@ export default function App() {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
           <div>
             <h1 className="text-4xl font-display font-bold tracking-tight text-zinc-900">Za'atari Project</h1>
-            <p className="text-zinc-500 mt-2 font-medium">Cabinet & Smart Meter Installation Tracking (Apr - Aug 06)</p>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <p className="text-zinc-500 font-medium">Cabinet & Smart Meter Installation Tracking (Apr 20 - Jul 22)</p>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-100 shadow-sm">
+                <RefreshCw className="w-3 h-3 animate-spin-slow" />
+                Last Update: Mar 21, 2026 • 09:02 AM
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-5">
@@ -229,13 +230,6 @@ export default function App() {
                     <p className="text-3xl font-display font-bold">{todayData.meters.actual} <span className="text-white/40 text-lg font-normal">/ {todayData.meters.target}</span></p>
                   </div>
                 </div>
-
-                <button 
-                  onClick={() => setEditingDay(todayData)}
-                  className="px-8 py-4 bg-white text-brand-600 rounded-2xl font-bold hover:bg-brand-50 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/10"
-                >
-                  Update Today
-                </button>
               </CardContent>
             </Card>
           </motion.div>
@@ -269,89 +263,106 @@ export default function App() {
           />
         </div>
 
-        {/* Task Status Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          <StatCard 
-            title="Completed Tasks (Days)" 
-            value={`${stats.tasks.completed} / 128`} 
-            icon={CheckCircle} 
-            color="bg-emerald-500"
-            progress={(stats.tasks.completed / 128) * 100}
-            variant="vibrant"
-          />
-          <StatCard 
-            title="In Progress Tasks (Days)" 
-            value={`${stats.tasks.inProgress} / 128`} 
-            icon={Clock} 
-            color="bg-amber-500"
-            progress={(stats.tasks.inProgress / 128) * 100}
-            variant="vibrant"
-          />
-          <StatCard 
-            title="Not Started Tasks (Days)" 
-            value={`${stats.tasks.notStarted} / 128`} 
-            icon={AlertCircle} 
-            color="bg-rose-500"
-            progress={(stats.tasks.notStarted / 128) * 100}
-            variant="vibrant"
-          />
-        </div>
+        <div className="space-y-12">
+          {/* Analytics Section */}
+          <section>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-brand-500/10 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-brand-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-display font-bold">Performance Analytics</h2>
+                <p className="text-sm text-zinc-500">Visual representation of project progress</p>
+              </div>
+            </div>
+            <Analytics data={productionData} />
+          </section>
 
-        {/* Main Dashboard Section */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Left Column: Tasks */}
-          <div className="xl:col-span-2 space-y-8">
-            <Card>
-              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold">Daily Productivity</h2>
-                  <p className="text-sm text-zinc-500">Tracking actual vs target productivity</p>
-                </div>
-                <MonthSelector selectedMonth={selectedMonth} onSelect={setSelectedMonth} />
-              </CardHeader>
-              <CardContent className="p-0">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={selectedMonth}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <TaskTable data={filteredData} onEdit={setEditingDay} />
-                  </motion.div>
-                </AnimatePresence>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Task Status Stats Grid */}
+          <section>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+              <StatCard 
+                title="Completed Tasks (Days)" 
+                value={`${stats.tasks.completed} / ${stats.tasks.totalDays}`} 
+                icon={CheckCircle} 
+                color="bg-emerald-500"
+                progress={(stats.tasks.completed / stats.tasks.totalDays) * 100}
+                variant="vibrant"
+              />
+              <StatCard 
+                title="In Progress Tasks (Days)" 
+                value={`${stats.tasks.inProgress} / ${stats.tasks.totalDays}`} 
+                icon={Clock} 
+                color="bg-amber-500"
+                progress={(stats.tasks.inProgress / stats.tasks.totalDays) * 100}
+                variant="vibrant"
+              />
+              <StatCard 
+                title="Not Started Tasks (Days)" 
+                value={`${stats.tasks.notStarted} / ${stats.tasks.totalDays}`} 
+                icon={AlertCircle} 
+                color="bg-rose-500"
+                progress={(stats.tasks.notStarted / stats.tasks.totalDays) * 100}
+                variant="vibrant"
+              />
+            </div>
 
-          {/* Right Column: Analytics & Quick Actions */}
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <h2 className="text-lg font-bold">Production Trends</h2>
-                <p className="text-sm text-zinc-500">Daily output for {MONTHS.find(m => m.index === selectedMonth)?.name}</p>
-              </CardHeader>
-              <CardContent>
-                <ProgressChart data={productionData} monthIndex={selectedMonth} />
-                <div className="mt-6 p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
-                      <AlertCircle className="w-4 h-4 text-white" />
-                    </div>
+            {/* Main Dashboard Section */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              {/* Left Column: Tasks */}
+              <div className="xl:col-span-2 space-y-8">
+                <Card>
+                  <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Project Note</p>
-                      <p className="text-sm font-bold">Awaiting Kick-off</p>
+                      <h2 className="text-lg font-bold">Daily Productivity</h2>
+                      <p className="text-sm text-zinc-500">Tracking actual vs target productivity</p>
                     </div>
-                  </div>
-                  <p className="text-xs text-zinc-500 leading-relaxed">
-                    The project is currently in the "Not Started" phase. Daily targets vary by month: Apr/May (7), Jun (8), Jul/Aug (9) cabinets per day.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                    <MonthSelector selectedMonth={selectedMonth} onSelect={setSelectedMonth} />
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={selectedMonth}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <TaskTable data={filteredData} />
+                      </motion.div>
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+              </div>
 
-          </div>
+              {/* Right Column: Analytics & Quick Actions */}
+              <div className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <h2 className="text-lg font-bold">Production Trends</h2>
+                    <p className="text-sm text-zinc-500">Daily output for {MONTHS.find(m => m.index === selectedMonth)?.name}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <ProgressChart data={productionData} monthIndex={selectedMonth} />
+                    <div className="mt-6 p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
+                          <AlertCircle className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Project Note</p>
+                          <p className="text-sm font-bold">Awaiting Kick-off</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-zinc-500 leading-relaxed">
+                        The project is currently in the "Not Started" phase. Daily targets are set to 12 cabinets and 72 meters per day.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </section>
         </div>
 
         <footer className="mt-16 pt-8 border-t border-zinc-200 text-center">
@@ -360,13 +371,6 @@ export default function App() {
           </p>
         </footer>
       </main>
-
-      {/* Edit Modal */}
-      <EditProductionModal 
-        day={editingDay} 
-        onClose={() => setEditingDay(null)} 
-        onSave={handleUpdateProduction} 
-      />
     </div>
   );
 }
