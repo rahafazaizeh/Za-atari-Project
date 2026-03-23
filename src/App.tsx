@@ -111,7 +111,7 @@ export default function App() {
           <div className="w-12 h-12 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/40">
             <TrendingUp className="text-white w-7 h-7" />
           </div>
-          <span className="font-display font-bold text-2xl tracking-tight">Pulse</span>
+          <span className="font-display font-bold text-2xl tracking-tight">Za-atari Project</span>
         </div>
 
         <nav className="flex-1 space-y-2">
